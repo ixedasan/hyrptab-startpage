@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyprTab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Geist:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- Wallpaper Layer -->
+<div id="wallpaper-layer">
+  <canvas id="color-canvas" width="1" height="1" style="display:none"></canvas>
+</div>
+
+<!-- Noise overlay -->
+<div class="noise-overlay"></div>
+
+<!-- Top Status Bar (Waybar-style) -->
+<header id="statusbar">
+  <div class="bar-left">
+    <span class="bar-logo">⬡ hypr</span>
+    <div id="workspace-indicators">
+      <button class="ws-btn active" data-ws="1">1</button>
+      <button class="ws-btn" data-ws="2">2</button>
+      <button class="ws-btn" data-ws="3">3</button>
+    </div>
+  </div>
+
+  <div class="bar-center">
+    <span id="bar-date"></span>
+    <span class="bar-sep">·</span>
+    <span id="bar-time"></span>
+  </div>
+
+  <div class="bar-right">
+    <span id="bar-weather">
+      <span id="weather-icon">⟳</span>
+      <span id="weather-temp">--°</span>
+    </span>
+    <span class="bar-sep">|</span>
+    <span id="bar-greeting"></span>
+  </div>
+</header>
+
+<!-- Main Tiling Grid -->
+<main id="tiling-grid">
+
+  <!-- WORKSPACE 1: Work / Productivity -->
+  <div class="workspace active" id="ws-1">
+
+    <div class="tile tile--clock" id="tile-clock">
+      <div class="tile-tag">clock</div>
+      <div class="clock-display">
+        <div id="clock-h">--</div>
+        <div class="clock-colon">:</div>
+        <div id="clock-m">--</div>
+      </div>
+      <div id="clock-secs-bar">
+        <div id="clock-secs-fill"></div>
+      </div>
+      <div id="clock-date-full"></div>
+    </div>
+
+    <div class="tile tile--search" id="tile-search">
+      <div class="tile-tag">search</div>
+      <div class="search-wrapper">
+        <span class="search-prompt">❯</span>
+        <input type="text" id="search-input" placeholder="search the web..." autocomplete="off" spellcheck="false" />
+      </div>
+      <div id="search-engine-toggle">
+        <button class="engine-btn active" data-engine="https://www.google.com/search?q=">G</button>
+        <button class="engine-btn" data-engine="https://duckduckgo.com/?q=">D</button>
+        <button class="engine-btn" data-engine="https://search.brave.com/search?q=">B</button>
+      </div>
+    </div>
+
+    <div class="tile tile--bookmarks" id="tile-bookmarks">
+      <div class="tile-tag">bookmarks</div>
+      <div id="bookmarks-list" class="link-list">
+        <div class="link-placeholder">loading...</div>
+      </div>
+    </div>
+
+    <div class="tile tile--topsites" id="tile-topsites">
+      <div class="tile-tag">frequent</div>
+      <div id="topsites-list" class="link-list">
+        <div class="link-placeholder">loading...</div>
+      </div>
+    </div>
+
+    <div class="tile tile--quote" id="tile-quote">
+      <div class="tile-tag">quote</div>
+      <div id="quote-text" class="quote-body"></div>
+      <div id="quote-author" class="quote-attr"></div>
+    </div>
+
+  </div>
+
+  <!-- WORKSPACE 2: Entertainment -->
+  <div class="workspace" id="ws-2">
+
+    <div class="tile tile--media-links">
+      <div class="tile-tag">media</div>
+      <div class="link-list" id="media-links">
+        <a class="link-item" href="https://youtube.com" target="_blank">
+          <span class="link-favicon">▶</span><span class="link-name">YouTube</span>
+        </a>
+        <a class="link-item" href="https://twitch.tv" target="_blank">
+          <span class="link-favicon">◉</span><span class="link-name">Twitch</span>
+        </a>
+        <a class="link-item" href="https://spotify.com" target="_blank">
+          <span class="link-favicon">♪</span><span class="link-name">Spotify</span>
+        </a>
+        <a class="link-item" href="https://netflix.com" target="_blank">
+          <span class="link-favicon">▣</span><span class="link-name">Netflix</span>
+        </a>
+        <a class="link-item" href="https://reddit.com" target="_blank">
+          <span class="link-favicon">◈</span><span class="link-name">Reddit</span>
+        </a>
+        <a class="link-item" href="https://news.ycombinator.com" target="_blank">
+          <span class="link-favicon">△</span><span class="link-name">HackerNews</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="tile tile--ws2-clock">
+      <div class="tile-tag">now</div>
+      <div class="clock-display">
+        <div id="clock-h-2">--</div>
+        <div class="clock-colon">:</div>
+        <div id="clock-m-2">--</div>
+      </div>
+      <div id="clock-date-full-2"></div>
+    </div>
+
+    <div class="tile tile--custom-links">
+      <div class="tile-tag">social</div>
+      <div class="link-list">
+        <a class="link-item" href="https://github.com" target="_blank">
+          <span class="link-favicon">⎇</span><span class="link-name">GitHub</span>
+        </a>
+        <a class="link-item" href="https://x.com" target="_blank">
+          <span class="link-favicon">✕</span><span class="link-name">X / Twitter</span>
+        </a>
+        <a class="link-item" href="https://discord.com/app" target="_blank">
+          <span class="link-favicon">◎</span><span class="link-name">Discord</span>
+        </a>
+        <a class="link-item" href="https://instagram.com" target="_blank">
+          <span class="link-favicon">⬡</span><span class="link-name">Instagram</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="tile tile--wallpaper-control">
+      <div class="tile-tag">theme</div>
+      <div class="wallpaper-section">
+        <p class="section-label">wallpaper</p>
+        <label class="upload-btn" for="wallpaper-input">
+          <span>set image</span>
+          <input type="file" id="wallpaper-input" accept="image/*" style="display:none" />
+        </label>
+        <button id="clear-wallpaper-btn">reset</button>
+      </div>
+      <div class="wallpaper-section">
+        <p class="section-label">accent palette</p>
+        <div id="palette-preview"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- WORKSPACE 3: Dev / Tools -->
+  <div class="workspace" id="ws-3">
+
+    <div class="tile tile--dev-links">
+      <div class="tile-tag">dev</div>
+      <div class="link-list">
+        <a class="link-item" href="https://github.com" target="_blank">
+          <span class="link-favicon">⎇</span><span class="link-name">GitHub</span>
+        </a>
+        <a class="link-item" href="https://stackoverflow.com" target="_blank">
+          <span class="link-favicon">◈</span><span class="link-name">Stack Overflow</span>
+        </a>
+        <a class="link-item" href="https://developer.mozilla.org" target="_blank">
+          <span class="link-favicon">◉</span><span class="link-name">MDN Docs</span>
+        </a>
+        <a class="link-item" href="https://codepen.io" target="_blank">
+          <span class="link-favicon">✦</span><span class="link-name">CodePen</span>
+        </a>
+        <a class="link-item" href="https://vercel.com/dashboard" target="_blank">
+          <span class="link-favicon">▲</span><span class="link-name">Vercel</span>
+        </a>
+        <a class="link-item" href="https://figma.com" target="_blank">
+          <span class="link-favicon">⬡</span><span class="link-name">Figma</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="tile tile--ws3-clock">
+      <div class="tile-tag">time</div>
+      <div class="clock-display">
+        <div id="clock-h-3">--</div>
+        <div class="clock-colon">:</div>
+        <div id="clock-m-3">--</div>
+      </div>
+      <div id="clock-date-full-3"></div>
+    </div>
+
+    <div class="tile tile--notes">
+      <div class="tile-tag">scratch</div>
+      <textarea id="scratch-pad" placeholder="// scratch pad&#10;// nothing is saved elsewhere..."></textarea>
+    </div>
+
+    <div class="tile tile--tools-links">
+      <div class="tile-tag">tools</div>
+      <div class="link-list">
+        <a class="link-item" href="https://regex101.com" target="_blank">
+          <span class="link-favicon">.*</span><span class="link-name">Regex101</span>
+        </a>
+        <a class="link-item" href="https://caniuse.com" target="_blank">
+          <span class="link-favicon">?</span><span class="link-name">Can I Use</span>
+        </a>
+        <a class="link-item" href="https://excalidraw.com" target="_blank">
+          <span class="link-favicon">✏</span><span class="link-name">Excalidraw</span>
+        </a>
+        <a class="link-item" href="https://jsonformatter.org" target="_blank">
+          <span class="link-favicon">{}</span><span class="link-name">JSON Formatter</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- Bottom command hint bar -->
+<footer id="hintbar">
+  <span class="hint"><kbd>Enter</kbd> search</span>
+  <span class="hint"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> workspaces</span>
+  <span class="hint"><kbd>Esc</kbd> clear</span>
+</footer>
+
+<script src="js/colorextract.js"></script>
+<script src="js/clock.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/bookmarks.js"></script>
+<script src="js/workspace.js"></script>
+<script src="js/search.js"></script>
+<script src="js/quote.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
