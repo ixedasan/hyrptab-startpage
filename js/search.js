@@ -1,16 +1,31 @@
 /**
- * search.js — Search bar logic with engine toggle
+ * search.js — Search bar with engine toggle.
+ *
+ * Note: Live autocomplete suggestions from Google/DDG cannot be implemented
+ * in a MV3 Chrome extension NTP page. Both fetch() and JSONP <script> injection
+ * are blocked by Chrome's hardcoded extension CSP. There is no workaround
+ * without running your own backend proxy server.
  */
 
 const Search = (() => {
 
   let activeEngine = 'https://www.google.com/search?q=';
 
+  function navigate(query) {
+    const q = query.trim();
+    if (!q) return;
+    if (/^https?:\/\//i.test(q) || /^[a-z0-9-]+\.[a-z]{2,}/i.test(q)) {
+      window.location.href = /^https?:\/\//i.test(q) ? q : `https://${q}`;
+    } else {
+      window.location.href = activeEngine + encodeURIComponent(q);
+    }
+  }
+
   function init() {
     const input = document.getElementById('search-input');
     if (!input) return;
 
-    // Engine toggle buttons
+    // Engine toggle
     document.querySelectorAll('.engine-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         activeEngine = btn.dataset.engine;
@@ -21,45 +36,26 @@ const Search = (() => {
       });
     });
 
-    // Restore saved engine
     chrome.storage.local.get(['searchEngine'], ({ searchEngine }) => {
       if (searchEngine) {
         activeEngine = searchEngine;
-        document.querySelectorAll('.engine-btn').forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.engine === searchEngine);
-        });
+        document.querySelectorAll('.engine-btn').forEach(btn =>
+          btn.classList.toggle('active', btn.dataset.engine === searchEngine));
       }
     });
 
-    // Auto-focus search on load (if not in another workspace)
     setTimeout(() => input.focus(), 120);
 
-    // Search on Enter
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && input.value.trim()) {
-        const query = input.value.trim();
-        // If it looks like a URL, navigate directly
-        if (/^https?:\/\//i.test(query) || /^[a-z0-9-]+\.[a-z]{2,}/i.test(query)) {
-          const url = /^https?:\/\//i.test(query) ? query : `https://${query}`;
-          window.location.href = url;
-        } else {
-          window.location.href = activeEngine + encodeURIComponent(query);
-        }
-      }
-      if (e.key === 'Escape') {
-        input.value = '';
-        input.blur();
-      }
+      if (e.key === 'Enter') { navigate(input.value); return; }
+      if (e.key === 'Escape') { input.value = ''; input.blur(); }
     });
 
-    // Global key capture: start typing to focus search
-    // Guard: ignore all modifier combos (Ctrl+Shift+1/2/3 are workspace shortcuts)
+    // Global: type anything to focus search
     document.addEventListener('keydown', (e) => {
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        input.focus();
-      }
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) input.focus();
     });
   }
 

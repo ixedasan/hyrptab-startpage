@@ -5,13 +5,13 @@ A functional, minimalist dashboard for Chrome inspired by Hyprland tiling WM and
 ## Features
 
 - 🎨 **Wallpaper-Sync** — Upload any image and the UI palette auto-adapts using k-means color extraction
-- 🖥 **3 Workspaces** — Work / Focus / Dev — switch with `Ctrl+Shift+1/2/3` or the bar buttons
+- 🖥 **3 Workspaces** — Work / Focus / Dev — switch with `Ctrl+1/2/3` or the bar buttons
 - ⬡ **Tiling Layout** — Non-overlapping geometric tile grid with consistent gaps and borders
 - 📌 **Pinned Links** — User-managed links in named collapsible groups, with drag-to-reorder, inline edit, and move-between-groups
 - 📂 **Chrome Bookmarks** — Live Bookmarks Bar display including folders, hidden scrollbar
 - 🕐 **Live Clock** — HH:MM with animated seconds progress bar
-- 🌤 **Weather** — Real-time temperature via Open-Meteo (geolocation, no API key needed)
-- 🔍 **Smart Search** — Google / DuckDuckGo / Brave with URL auto-detection; type anything to start searching
+- 🌤 **Weather** — Real-time temperature via Open-Meteo (geolocation, no API key)
+- 🔍 **Search** — Google / DuckDuckGo / Brave with URL auto-detection; type anything to start searching
 - 🍅 **Pomodoro Timer** — 25/5/15 min modes, animated SVG ring, session tracker
 - 🌍 **World Clocks** — Configurable per-timezone clocks with day-offset badges
 - ⇆ **Unit Converter** — °C↔°F, km↔mi, px↔rem, kg↔lb, MB↔MiB
@@ -27,24 +27,24 @@ A functional, minimalist dashboard for Chrome inspired by Hyprland tiling WM and
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl + Shift + 1` | Switch to Workspace 1 |
-| `Ctrl + Shift + 2` | Switch to Workspace 2 |
-| `Ctrl + Shift + 3` | Switch to Workspace 3 |
-| Type anything | Focus search bar |
-| `Enter` | Search / navigate to URL |
-| `Escape` | Clear search and unfocus |
+| Shortcut      | Action                   |
+| ------------- | ------------------------ |
+| `Ctrl + 1`    | Switch to Workspace 1    |
+| `Ctrl + 2`    | Switch to Workspace 2    |
+| `Ctrl + 3`    | Switch to Workspace 3    |
+| Type anything | Focus search bar         |
+| `Enter`       | Search / navigate to URL |
+| `Escape`      | Clear search and unfocus |
 
-Workspace shortcuts work from any focus state — including while the search bar is active — and never type characters into any input.
+Workspace shortcuts work from any focus state, including while the search bar is active.
 
 ## Workspaces
 
-| # | Purpose | Tiles |
-|---|---------|-------|
-| 1 | Work | Clock · Search · Bookmarks Bar · Pinned Links · Quote |
-| 2 | Focus / Tools | Pomodoro · Clock · World Clocks + Converter · Theme |
-| 3 | Dev | Dev Links · Clock · Scratch Pad · Tool Links |
+| #   | Purpose       | Tiles                                                 |
+| --- | ------------- | ----------------------------------------------------- |
+| 1   | Work          | Clock · Search · Bookmarks Bar · Pinned Links · Quote |
+| 2   | Focus / Tools | Pomodoro · Clock · World Clocks + Converter · Theme   |
+| 3   | Dev           | Dev Links · Clock · Scratch Pad · Tool Links          |
 
 ## Pinned Links (Frequent tile)
 
@@ -56,7 +56,6 @@ Workspace shortcuts work from any focus state — including while the search bar
   - ✕ removes a link · ✎ edits URL/name · ⇄ moves to another group
   - Drag cells to reorder within a group
   - **+ new group** button appears at the bottom
-- All data persists locally via `chrome.storage`
 
 ## Permissions Used
 

@@ -1,6 +1,7 @@
 /**
  * workspace.js — Workspace / virtual desktop management
- * Shortcut: Ctrl+Shift+1/2/3 — works from any focus state
+ * Shortcut: Ctrl+1 / Ctrl+2 / Ctrl+3
+ * (works from any focus state; not claimed by Chrome within page content)
  */
 
 const Workspace = (() => {
@@ -32,14 +33,15 @@ const Workspace = (() => {
       btn.addEventListener('click', () => switchTo(btn.dataset.ws));
     });
 
-    // Ctrl+Shift+1/2/3 — works from any focus state, never conflicts with
-    // browser shortcuts or leaks characters into inputs
+    // Ctrl+1/2/3 — capture phase, fires before any input handler
+    // Ctrl is safe: Chrome only uses Ctrl+1–8 for tab switching when the
+    // tab bar is focused, not when a web page has focus.
     document.addEventListener('keydown', (e) => {
-      if (!e.ctrlKey || !e.shiftKey) return;
-      if (e.key === '1' || e.key === '!') { e.preventDefault(); switchTo(1); }
-      if (e.key === '2' || e.key === '@') { e.preventDefault(); switchTo(2); }
-      if (e.key === '3' || e.key === '#') { e.preventDefault(); switchTo(3); }
-    }, true); // capture phase — fires before input handlers
+      if (!e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
+      if (e.key === '1') { e.preventDefault(); switchTo(1); }
+      if (e.key === '2') { e.preventDefault(); switchTo(2); }
+      if (e.key === '3') { e.preventDefault(); switchTo(3); }
+    }, true); // capture phase
 
     // Restore last workspace
     chrome.storage.local.get(['lastWorkspace'], ({ lastWorkspace }) => {
