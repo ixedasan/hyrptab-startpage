@@ -142,39 +142,19 @@
       <div id="clock-date-full-2"></div>
     </div>
 
-    <!-- Calculator -->
-    <div class="tile tile--calc">
-      <div class="tile-tag">calc</div>
-      <div class="calc-inner">
-        <div class="calc-display">
-          <div id="calc-expr" class="calc-expr"></div>
-          <div id="calc-result" class="calc-result">0</div>
-        </div>
-        <div class="calc-grid">
-          <button class="calc-btn calc-fn" data-val="C">C</button>
-          <button class="calc-btn calc-fn" data-val="±">±</button>
-          <button class="calc-btn calc-fn" data-val="%">%</button>
-          <button class="calc-btn calc-op" data-val="÷">÷</button>
-
-          <button class="calc-btn" data-val="7">7</button>
-          <button class="calc-btn" data-val="8">8</button>
-          <button class="calc-btn" data-val="9">9</button>
-          <button class="calc-btn calc-op" data-val="×">×</button>
-
-          <button class="calc-btn" data-val="4">4</button>
-          <button class="calc-btn" data-val="5">5</button>
-          <button class="calc-btn" data-val="6">6</button>
-          <button class="calc-btn calc-op" data-val="−">−</button>
-
-          <button class="calc-btn" data-val="1">1</button>
-          <button class="calc-btn" data-val="2">2</button>
-          <button class="calc-btn" data-val="3">3</button>
-          <button class="calc-btn calc-op" data-val="+">+</button>
-
-          <button class="calc-btn calc-zero" data-val="0">0</button>
-          <button class="calc-btn" data-val=".">.</button>
-          <button class="calc-btn calc-op calc-eq" data-val="=">=</button>
-        </div>
+    <!-- World Clocks + Unit Converter -->
+    <div class="tile tile--worldclock" id="tile-worldclock">
+      <div class="tile-tag">clocks</div>
+      <div class="wc-controls">
+        <button id="wc-edit-btn" class="wc-ctrl-btn">edit</button>
+        <button id="wc-add-btn" class="wc-ctrl-btn wc-ctrl-add">+</button>
+      </div>
+      <div class="wc-section">
+        <div id="wc-clocks" class="wc-clocks"></div>
+      </div>
+      <div class="wc-divider"></div>
+      <div class="wc-section">
+        <div id="wc-converter" class="wc-converter"></div>
       </div>
     </div>
 
@@ -275,7 +255,7 @@
 <script src="js/search.js"></script>
 <script src="js/quote.js"></script>
 <script src="js/pomodoro.js"></script>
-<script src="js/calculator.js"></script>
+<script src="js/worldclock.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

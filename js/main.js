@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Search.init();
   Quote.init();
   Pomodoro.init();
-  Calculator.init();
+  WorldClock.init();
 
   // ── Restore wallpaper & theme ──
   restoreWallpaper();
