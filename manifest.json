@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "HyprTab",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A Hyprland-inspired tiling new tab dashboard with wallpaper-synced theming.",
   "chrome_url_overrides": {
     "newtab": "newtab.html"

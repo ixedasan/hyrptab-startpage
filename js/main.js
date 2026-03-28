@@ -5,6 +5,28 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // ── Suppress Chrome's "Customize Chrome" side panel button ──
+  // This button is rendered by Chrome's browser process above the extension
+  // document. The most reliable CSS approach is ensuring zero document scroll.
+  // We also try to nuke any injected elements as a best-effort measure.
+  function purgeNTPInjections() {
+    const kill = [
+      'ntp-app','#ntp-app','cr-button','ntp-realbox',
+      '#realbox-container','#customization-menu',
+      'ntp-middle-slot-promo','ntp-iframe','ntp-customize-dialog',
+    ];
+    kill.forEach(sel => document.querySelectorAll(sel).forEach(el => el.remove()));
+    // Ensure document never scrolls (scroll triggers Chrome's NTP chrome bar)
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }
+
+  purgeNTPInjections();
+  const ntpObserver = new MutationObserver(purgeNTPInjections);
+  ntpObserver.observe(document.documentElement, { childList: true, subtree: true });
+
   // ── Init all modules ──
   Clock.init();
   Weather.init();

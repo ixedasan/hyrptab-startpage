@@ -1,5 +1,6 @@
 /**
  * workspace.js — Workspace / virtual desktop management
+ * Shortcut: Ctrl+Shift+1/2/3 — works from any focus state
  */
 
 const Workspace = (() => {
@@ -11,15 +12,12 @@ const Workspace = (() => {
     if (isNaN(num) || num < 1 || num > 3) return;
     if (num === current) return;
 
-    // Hide active workspace
     const prev = document.getElementById(`ws-${current}`);
     if (prev) prev.classList.remove('active');
 
-    // Show new workspace
     const next = document.getElementById(`ws-${num}`);
     if (next) next.classList.add('active');
 
-    // Update bar indicators
     document.querySelectorAll('.ws-btn').forEach(btn => {
       btn.classList.toggle('active', parseInt(btn.dataset.ws) === num);
     });
@@ -34,14 +32,14 @@ const Workspace = (() => {
       btn.addEventListener('click', () => switchTo(btn.dataset.ws));
     });
 
-    // Keyboard shortcuts: 1/2/3 when not in input
+    // Ctrl+Shift+1/2/3 — works from any focus state, never conflicts with
+    // browser shortcuts or leaks characters into inputs
     document.addEventListener('keydown', (e) => {
-      const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (e.key === '1') switchTo(1);
-      if (e.key === '2') switchTo(2);
-      if (e.key === '3') switchTo(3);
-    });
+      if (!e.ctrlKey || !e.shiftKey) return;
+      if (e.key === '1' || e.key === '!') { e.preventDefault(); switchTo(1); }
+      if (e.key === '2' || e.key === '@') { e.preventDefault(); switchTo(2); }
+      if (e.key === '3' || e.key === '#') { e.preventDefault(); switchTo(3); }
+    }, true); // capture phase — fires before input handlers
 
     // Restore last workspace
     chrome.storage.local.get(['lastWorkspace'], ({ lastWorkspace }) => {

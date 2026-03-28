@@ -2,12 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <!-- Tell Chrome this NTP fully overrides the default page -->
+  <meta name="color-scheme" content="dark" />
   <title>HyprTab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Geist:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Inline fallback: iron-clad full takeover before external CSS loads */
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+  </style>
 </head>
 <body>
 
@@ -243,7 +249,7 @@
 <!-- Bottom command hint bar -->
 <footer id="hintbar">
   <span class="hint"><kbd>Enter</kbd> search</span>
-  <span class="hint"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> workspaces</span>
+  <span class="hint"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>1/2/3</kbd> workspaces</span>
   <span class="hint"><kbd>Esc</kbd> clear</span>
 </footer>
 

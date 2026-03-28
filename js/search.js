@@ -53,12 +53,12 @@ const Search = (() => {
     });
 
     // Global key capture: start typing to focus search
+    // Guard: ignore all modifier combos (Ctrl+Shift+1/2/3 are workspace shortcuts)
     document.addEventListener('keydown', (e) => {
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
         input.focus();
-        // The keypress will be handled by the input naturally
       }
     });
   }

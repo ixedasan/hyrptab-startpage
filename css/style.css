@@ -33,14 +33,31 @@
   padding: 0;
 }
 
-html, body {
-  width: 100%;
-  height: 100%;
+html {
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
   overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--text);
   background: var(--bg);
+  position: fixed;
+  inset: 0;
+}
+
+/* Belt-and-suspenders: block scroll on every container */
+#tiling-grid, .workspace, .tile {
+  overscroll-behavior: none;
 }
 
 /* ── Wallpaper ── */
