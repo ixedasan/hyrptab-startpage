@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   Workspace.init();
   Search.init();
   Quote.init();
+  Pomodoro.init();
+  Calculator.init();
 
   // ── Restore wallpaper & theme ──
   restoreWallpaper();

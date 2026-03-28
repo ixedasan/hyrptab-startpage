@@ -1,8 +1,10 @@
 /**
  * bookmarks.js
  *
- * "frequent" tile  → user-pinned links, grid layout, editable
- * "bookmarks" tile → bookmarks bar tree (folders + links), scrollable, no visible scrollbar
+ * "frequent" tile  → user-pinned links in named groups, grid layout,
+ *                    drag-to-reorder within groups, add/remove/rename groups,
+ *                    edit link name/url inline
+ * "bookmarks" tile → bookmarks bar tree (folders + links), hidden scrollbar
  * All links open in the same tab.
  */
 
@@ -13,10 +15,8 @@ const Bookmarks = (() => {
   // ─────────────────────────────────────────────
 
   function getFaviconUrl(url) {
-    try {
-      const { hostname } = new URL(url);
-      return `https://www.google.com/s2/favicons?sz=32&domain=${hostname}`;
-    } catch { return null; }
+    try { return `https://www.google.com/s2/favicons?sz=32&domain=${new URL(url).hostname}`; }
+    catch { return null; }
   }
 
   function shortTitle(title, url) {
@@ -26,167 +26,449 @@ const Bookmarks = (() => {
   }
 
   // ─────────────────────────────────────────────
-  // PINNED (frequent) — user-managed grid
+  // Storage — groups: [{ id, name, items: [{ id, url, title }] }]
   // ─────────────────────────────────────────────
 
-  const STORAGE_KEY = 'pinnedLinks';
+  const STORAGE_KEY = 'pinnedGroups';
 
-  function loadPinned(cb) {
-    chrome.storage.local.get([STORAGE_KEY], (r) => cb(r[STORAGE_KEY] || []));
+  function loadGroups(cb) {
+    chrome.storage.local.get([STORAGE_KEY], (r) => {
+      let groups = r[STORAGE_KEY];
+      if (!groups || !Array.isArray(groups) || groups.length === 0) {
+        groups = [{ id: uid(), name: 'pinned', items: [] }];
+      }
+      cb(groups);
+    });
   }
 
-  function savePinned(pins, cb) {
-    chrome.storage.local.set({ [STORAGE_KEY]: pins }, cb);
+  function saveGroups(groups, cb) {
+    chrome.storage.local.set({ [STORAGE_KEY]: groups }, cb || (() => {}));
   }
+
+  function uid() { return Math.random().toString(36).slice(2, 9); }
+
+  // ─────────────────────────────────────────────
+  // State
+  // ─────────────────────────────────────────────
 
   let editMode = false;
+  let activeGroupId = null;
+  let dragState = null; // { groupId, itemId, el, ghost, startX, startY }
 
-  function renderPinned() {
-    const grid = document.getElementById('pinned-grid');
+  // ─────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────
+
+  function render() {
+    const root = document.getElementById('pinned-root');
     const editBtn = document.getElementById('pinned-edit-btn');
-    if (!grid) return;
+    if (!root) return;
 
-    loadPinned((pins) => {
-      grid.innerHTML = '';
+    loadGroups((groups) => {
+      // Restore active group or default to first
+      if (!activeGroupId || !groups.find(g => g.id === activeGroupId)) {
+        activeGroupId = groups[0].id;
+      }
 
-      pins.forEach((pin, idx) => {
-        const cell = document.createElement('div');
-        cell.className = 'pinned-cell';
+      root.innerHTML = '';
 
-        // Remove button (edit mode)
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'pinned-remove';
-        removeBtn.textContent = '✕';
-        removeBtn.title = 'Remove';
-        removeBtn.addEventListener('click', (e) => {
-          e.preventDefault(); e.stopPropagation();
-          loadPinned((p) => { p.splice(idx, 1); savePinned(p, renderPinned); });
-        });
+      // ── Group tabs bar ──
+      const tabBar = document.createElement('div');
+      tabBar.className = 'pg-tabbar';
 
-        // Link
-        const a = document.createElement('a');
-        a.href = pin.url;
-        a.className = 'pinned-link';
-        a.title = pin.title || pin.url;
-        a.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (editMode) return;
-          window.location.href = pin.url;
-        });
+      groups.forEach(group => {
+        const tab = document.createElement('div');
+        tab.className = 'pg-tab' + (group.id === activeGroupId ? ' active' : '');
+        tab.dataset.gid = group.id;
 
-        // Favicon
-        const ico = document.createElement('div');
-        ico.className = 'pinned-favicon';
-        const faviconUrl = getFaviconUrl(pin.url);
-        if (faviconUrl) {
-          const img = document.createElement('img');
-          img.src = faviconUrl;
-          img.alt = '';
-          img.onerror = () => { img.style.display = 'none'; ico.textContent = '⬡'; };
-          ico.appendChild(img);
+        if (editMode) {
+          // Editable name
+          const nameInput = document.createElement('input');
+          nameInput.className = 'pg-tab-input';
+          nameInput.value = group.name;
+          nameInput.spellcheck = false;
+          nameInput.addEventListener('blur', () => {
+            const val = nameInput.value.trim();
+            if (val) {
+              loadGroups((gs) => {
+                const g = gs.find(g => g.id === group.id);
+                if (g) { g.name = val; saveGroups(gs, render); }
+              });
+            }
+          });
+          nameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') nameInput.blur();
+            e.stopPropagation();
+          });
+          tab.appendChild(nameInput);
+
+          // Delete group button (only if >1 group)
+          if (groups.length > 1) {
+            const delBtn = document.createElement('button');
+            delBtn.className = 'pg-tab-del';
+            delBtn.textContent = '✕';
+            delBtn.title = 'Delete group';
+            delBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (!confirm(`Delete group "${group.name}" and all its links?`)) return;
+              loadGroups((gs) => {
+                const idx = gs.findIndex(g => g.id === group.id);
+                gs.splice(idx, 1);
+                if (activeGroupId === group.id) activeGroupId = gs[0].id;
+                saveGroups(gs, render);
+              });
+            });
+            tab.appendChild(delBtn);
+          }
         } else {
-          ico.textContent = '⬡';
+          tab.textContent = group.name;
+          tab.addEventListener('click', () => {
+            activeGroupId = group.id;
+            render();
+          });
         }
 
-        // Label
-        const lbl = document.createElement('div');
-        lbl.className = 'pinned-label';
-        lbl.textContent = shortTitle(pin.title, pin.url);
-
-        a.appendChild(ico);
-        a.appendChild(lbl);
-        cell.appendChild(removeBtn);
-        cell.appendChild(a);
-        grid.appendChild(cell);
+        tabBar.appendChild(tab);
       });
 
-      // "Add" cell
+      // Add group button
+      if (editMode) {
+        const addTab = document.createElement('button');
+        addTab.className = 'pg-tab-add';
+        addTab.textContent = '+';
+        addTab.title = 'New group';
+        addTab.addEventListener('click', () => {
+          loadGroups((gs) => {
+            const newGroup = { id: uid(), name: 'group ' + (gs.length + 1), items: [] };
+            gs.push(newGroup);
+            activeGroupId = newGroup.id;
+            saveGroups(gs, render);
+          });
+        });
+        tabBar.appendChild(addTab);
+      }
+
+      root.appendChild(tabBar);
+
+      // ── Active group grid ──
+      const activeGroup = groups.find(g => g.id === activeGroupId) || groups[0];
+
+      const grid = document.createElement('div');
+      grid.className = 'pinned-grid' + (editMode ? ' edit-mode' : '');
+      grid.dataset.gid = activeGroup.id;
+
+      activeGroup.items.forEach((item, idx) => {
+        grid.appendChild(makePinnedCell(item, idx, activeGroup, groups));
+      });
+
+      // Add cell
       const addCell = document.createElement('div');
       addCell.className = 'pinned-cell pinned-add-cell';
       addCell.title = 'Pin a link';
       addCell.innerHTML = `<span class="pinned-add-icon">+</span><span class="pinned-add-label">add</span>`;
-      addCell.addEventListener('click', () => openAddModal());
+      addCell.addEventListener('click', () => openAddModal(activeGroup.id));
       grid.appendChild(addCell);
 
-      grid.classList.toggle('edit-mode', editMode);
+      root.appendChild(grid);
+
       if (editBtn) editBtn.textContent = editMode ? 'done' : 'edit';
+
+      // Activate tab click after re-render (non-edit mode tabs)
+      if (!editMode) {
+        root.querySelectorAll('.pg-tab').forEach(tab => {
+          tab.addEventListener('click', () => {
+            activeGroupId = tab.dataset.gid;
+            render();
+          });
+        });
+      }
     });
   }
 
-  function openAddModal() {
-    document.getElementById('pin-modal')?.remove();
+  // ── Build one pinned cell ──
+  function makePinnedCell(item, idx, group, allGroups) {
+    const cell = document.createElement('div');
+    cell.className = 'pinned-cell';
+    cell.dataset.iid = item.id;
+    cell.draggable = editMode;
 
-    const overlay = document.createElement('div');
-    overlay.id = 'pin-modal';
-    overlay.className = 'pin-modal-overlay';
-    overlay.innerHTML = `
-      <div class="pin-modal">
-        <div class="pin-modal-tag">pin a link</div>
-        <div class="pin-modal-field">
-          <label>url</label>
-          <input id="pin-url-input" type="text" placeholder="https://example.com" spellcheck="false" autocomplete="off" />
-        </div>
-        <div class="pin-modal-field">
-          <label>name <span style="color:var(--text-dimmer)">(optional)</span></label>
-          <input id="pin-name-input" type="text" placeholder="auto-detected" spellcheck="false" autocomplete="off" />
-        </div>
-        <div class="pin-modal-actions">
-          <button id="pin-cancel-btn">cancel</button>
-          <button id="pin-save-btn" class="pin-save">pin</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-
-    const urlInput  = document.getElementById('pin-url-input');
-    const nameInput = document.getElementById('pin-name-input');
-    urlInput.focus();
-
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-    document.getElementById('pin-cancel-btn').addEventListener('click', () => overlay.remove());
-    document.getElementById('pin-save-btn').addEventListener('click', () => {
-      let url = urlInput.value.trim();
-      if (!url) return;
-      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-      const title = nameInput.value.trim() || '';
-      loadPinned((pins) => {
-        pins.push({ url, title });
-        savePinned(pins, () => { overlay.remove(); renderPinned(); });
+    // ── Remove button ──
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'pinned-remove';
+    removeBtn.textContent = '✕';
+    removeBtn.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      loadGroups((gs) => {
+        const g = gs.find(g => g.id === group.id);
+        if (!g) return;
+        g.items.splice(g.items.findIndex(i => i.id === item.id), 1);
+        saveGroups(gs, render);
       });
     });
-    [urlInput, nameInput].forEach(inp => {
-      inp.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('pin-save-btn').click();
-        if (e.key === 'Escape') overlay.remove();
-      });
-    });
-  }
 
-  function initPinned() {
-    const editBtn = document.getElementById('pinned-edit-btn');
-    if (editBtn) {
-      editBtn.addEventListener('click', () => { editMode = !editMode; renderPinned(); });
+    // ── Edit button (pencil) ──
+    const editItemBtn = document.createElement('button');
+    editItemBtn.className = 'pinned-edit-item';
+    editItemBtn.textContent = '✎';
+    editItemBtn.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      openEditModal(item, group.id);
+    });
+
+    // ── Move-to-group button (only if multiple groups) ──
+    let moveBtn = null;
+    if (allGroups.length > 1) {
+      moveBtn = document.createElement('button');
+      moveBtn.className = 'pinned-move-btn';
+      moveBtn.textContent = '⇄';
+      moveBtn.title = 'Move to group';
+
+      const moveMenu = document.createElement('div');
+      moveMenu.className = 'pinned-move-menu';
+      allGroups.filter(g => g.id !== group.id).forEach(g => {
+        const opt = document.createElement('button');
+        opt.textContent = g.name;
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          loadGroups((gs) => {
+            const srcGroup = gs.find(x => x.id === group.id);
+            const dstGroup = gs.find(x => x.id === g.id);
+            if (!srcGroup || !dstGroup) return;
+            const itemIdx = srcGroup.items.findIndex(i => i.id === item.id);
+            const [moved] = srcGroup.items.splice(itemIdx, 1);
+            dstGroup.items.push(moved);
+            saveGroups(gs, render);
+          });
+        });
+        moveMenu.appendChild(opt);
+      });
+
+      moveBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        moveMenu.classList.toggle('open');
+      });
+
+      document.addEventListener('click', () => moveMenu.classList.remove('open'), { once: true });
+      cell.appendChild(moveMenu);
     }
-    renderPinned();
+
+    // ── Link ──
+    const a = document.createElement('a');
+    a.href = item.url;
+    a.className = 'pinned-link';
+    a.title = item.title || item.url;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (editMode) return;
+      window.location.href = item.url;
+    });
+
+    const ico = document.createElement('div');
+    ico.className = 'pinned-favicon';
+    const faviconUrl = getFaviconUrl(item.url);
+    if (faviconUrl) {
+      const img = document.createElement('img');
+      img.src = faviconUrl; img.alt = '';
+      img.onerror = () => { img.style.display = 'none'; ico.textContent = '⬡'; };
+      ico.appendChild(img);
+    } else { ico.textContent = '⬡'; }
+
+    const lbl = document.createElement('div');
+    lbl.className = 'pinned-label';
+    lbl.textContent = shortTitle(item.title, item.url);
+
+    a.appendChild(ico); a.appendChild(lbl);
+    cell.appendChild(removeBtn);
+    cell.appendChild(editItemBtn);
+    if (moveBtn) cell.appendChild(moveBtn);
+    cell.appendChild(a);
+
+    // ── Drag-to-reorder (edit mode) ──
+    if (editMode) {
+      cell.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) return;
+        startDrag(e, cell, item.id, group.id);
+      });
+    }
+
+    return cell;
   }
 
   // ─────────────────────────────────────────────
-  // BOOKMARKS BAR — tree with folders
+  // Drag-to-reorder
+  // ─────────────────────────────────────────────
+
+  function startDrag(e, el, itemId, groupId) {
+    const rect = el.getBoundingClientRect();
+    const ghost = el.cloneNode(true);
+    ghost.style.cssText = `
+      position:fixed; pointer-events:none; z-index:9000; opacity:0.85;
+      width:${rect.width}px; height:${rect.height}px;
+      left:${rect.left}px; top:${rect.top}px;
+      transition:none; border:1px solid var(--accent);
+      background:color-mix(in srgb,var(--bg2) 95%,var(--accent));
+      transform:scale(1.05);
+    `;
+    document.body.appendChild(ghost);
+    el.style.opacity = '0.3';
+
+    dragState = { itemId, groupId, el, ghost, startX: e.clientX, startY: e.clientY, rectLeft: rect.left, rectTop: rect.top };
+
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd, { once: true });
+  }
+
+  function onDragMove(e) {
+    if (!dragState) return;
+    const { ghost, rectLeft, rectTop, startX, startY } = dragState;
+    ghost.style.left = (rectLeft + e.clientX - startX) + 'px';
+    ghost.style.top  = (rectTop  + e.clientY - startY) + 'px';
+
+    // Highlight potential drop target
+    document.querySelectorAll('.pinned-cell').forEach(c => c.classList.remove('drag-over'));
+    const target = getDragTarget(e.clientX, e.clientY);
+    if (target && target !== dragState.el) target.classList.add('drag-over');
+  }
+
+  function onDragEnd(e) {
+    document.removeEventListener('mousemove', onDragMove);
+    if (!dragState) return;
+    const { itemId, groupId, el, ghost } = dragState;
+    ghost.remove();
+    el.style.opacity = '';
+    document.querySelectorAll('.pinned-cell').forEach(c => c.classList.remove('drag-over'));
+
+    const target = getDragTarget(e.clientX, e.clientY);
+    if (target && target !== el && target.dataset.iid) {
+      const targetId = target.dataset.iid;
+      loadGroups((gs) => {
+        const g = gs.find(g => g.id === groupId);
+        if (!g) return;
+        const fromIdx = g.items.findIndex(i => i.id === itemId);
+        const toIdx   = g.items.findIndex(i => i.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = g.items.splice(fromIdx, 1);
+        g.items.splice(toIdx, 0, moved);
+        saveGroups(gs, render);
+      });
+    }
+
+    dragState = null;
+  }
+
+  function getDragTarget(x, y) {
+    const grid = document.querySelector('.pinned-grid');
+    if (!grid) return null;
+    for (const cell of grid.querySelectorAll('.pinned-cell:not(.pinned-add-cell)')) {
+      const r = cell.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return cell;
+    }
+    return null;
+  }
+
+  // ─────────────────────────────────────────────
+  // Modals
+  // ─────────────────────────────────────────────
+
+  function openAddModal(groupId) {
+    document.getElementById('pin-modal')?.remove();
+    const overlay = makeModalOverlay('pin a link', [
+      { id: 'pin-url-input',  label: 'url',  placeholder: 'https://example.com' },
+      { id: 'pin-name-input', label: 'name', placeholder: 'auto-detected', optional: true },
+    ], 'pin', (vals) => {
+      let url = vals['pin-url-input'].trim();
+      if (!url) return false;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      const title = vals['pin-name-input'].trim() || '';
+      loadGroups((gs) => {
+        const g = gs.find(g => g.id === groupId);
+        if (g) { g.items.push({ id: uid(), url, title }); saveGroups(gs, render); }
+      });
+      return true;
+    });
+    document.body.appendChild(overlay);
+    overlay.querySelector('input').focus();
+  }
+
+  function openEditModal(item, groupId) {
+    document.getElementById('pin-modal')?.remove();
+    const overlay = makeModalOverlay('edit link', [
+      { id: 'pin-url-input',  label: 'url',  placeholder: 'https://example.com', value: item.url },
+      { id: 'pin-name-input', label: 'name', placeholder: 'auto-detected', value: item.title, optional: true },
+    ], 'save', (vals) => {
+      let url = vals['pin-url-input'].trim();
+      if (!url) return false;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      const title = vals['pin-name-input'].trim() || '';
+      loadGroups((gs) => {
+        const g = gs.find(g => g.id === groupId);
+        if (!g) return;
+        const it = g.items.find(i => i.id === item.id);
+        if (it) { it.url = url; it.title = title; saveGroups(gs, render); }
+      });
+      return true;
+    });
+    document.body.appendChild(overlay);
+    overlay.querySelector('input').focus();
+  }
+
+  function makeModalOverlay(tagText, fields, confirmLabel, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.id = 'pin-modal';
+    overlay.className = 'pin-modal-overlay';
+
+    const fieldsHTML = fields.map(f => `
+      <div class="pin-modal-field">
+        <label>${f.label}${f.optional ? ' <span style="color:var(--text-dimmer)">(optional)</span>' : ''}</label>
+        <input id="${f.id}" type="text" placeholder="${f.placeholder}" value="${(f.value || '').replace(/"/g,'&quot;')}" spellcheck="false" autocomplete="off" />
+      </div>
+    `).join('');
+
+    overlay.innerHTML = `
+      <div class="pin-modal">
+        <div class="pin-modal-tag">${tagText}</div>
+        ${fieldsHTML}
+        <div class="pin-modal-actions">
+          <button id="pin-cancel-btn">cancel</button>
+          <button id="pin-save-btn" class="pin-save">${confirmLabel}</button>
+        </div>
+      </div>
+    `;
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    overlay.querySelector('#pin-cancel-btn').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('#pin-save-btn').addEventListener('click', () => {
+      const vals = {};
+      fields.forEach(f => { vals[f.id] = overlay.querySelector(`#${f.id}`).value; });
+      if (onConfirm(vals)) overlay.remove();
+    });
+    overlay.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') overlay.querySelector('#pin-save-btn').click();
+        if (e.key === 'Escape') overlay.remove();
+        e.stopPropagation();
+      });
+    });
+
+    return overlay;
+  }
+
+  // ─────────────────────────────────────────────
+  // BOOKMARKS BAR — tree with folders, hidden scrollbar
   // ─────────────────────────────────────────────
 
   function createBookmarkLink(node) {
     const a = document.createElement('a');
     a.className = 'link-item bm-link';
-    a.href = node.url;
-    a.title = node.title || node.url;
+    a.href = node.url; a.title = node.title || node.url;
     a.addEventListener('click', (e) => { e.preventDefault(); window.location.href = node.url; });
 
     const ico = document.createElement('span');
     ico.className = 'link-favicon';
-    const faviconUrl = getFaviconUrl(node.url);
-    if (faviconUrl) {
+    const fu = getFaviconUrl(node.url);
+    if (fu) {
       const img = document.createElement('img');
-      img.src = faviconUrl; img.alt = '';
+      img.src = fu; img.alt = '';
       img.onerror = () => { img.style.display = 'none'; ico.textContent = '⬡'; };
       ico.appendChild(img);
     } else { ico.textContent = '⬡'; }
@@ -222,8 +504,7 @@ const Bookmarks = (() => {
       else if (child.children) children.appendChild(createFolderEl(child));
     });
 
-    wrap.appendChild(header);
-    wrap.appendChild(children);
+    wrap.appendChild(header); wrap.appendChild(children);
     return wrap;
   }
 
@@ -234,12 +515,10 @@ const Bookmarks = (() => {
       container.innerHTML = '<div class="link-placeholder">bookmarks unavailable</div>';
       return;
     }
-
-    // Node id "1" = Bookmarks Bar
     chrome.bookmarks.getSubTree('1', ([barNode]) => {
       container.innerHTML = '';
       const items = barNode?.children || [];
-      if (items.length === 0) {
+      if (!items.length) {
         container.innerHTML = '<div class="link-placeholder">bookmarks bar is empty</div>';
         return;
       }
@@ -255,7 +534,11 @@ const Bookmarks = (() => {
   // ─────────────────────────────────────────────
 
   function init() {
-    initPinned();
+    const editBtn = document.getElementById('pinned-edit-btn');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => { editMode = !editMode; render(); });
+    }
+    render();
     loadBookmarksBar();
   }
 

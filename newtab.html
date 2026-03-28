@@ -88,7 +88,7 @@
     <div class="tile tile--topsites" id="tile-topsites">
       <div class="tile-tag">frequent</div>
       <button id="pinned-edit-btn" class="pinned-edit-toggle">edit</button>
-      <div id="pinned-grid" class="pinned-grid"></div>
+      <div id="pinned-root" class="pinned-root"></div>
     </div>
 
     <div class="tile tile--quote" id="tile-quote">
@@ -99,30 +99,36 @@
 
   </div>
 
-  <!-- WORKSPACE 2: Entertainment -->
+  <!-- WORKSPACE 2: Tools -->
   <div class="workspace" id="ws-2">
 
-    <div class="tile tile--media-links">
-      <div class="tile-tag">media</div>
-      <div class="link-list" id="media-links">
-        <a class="link-item" href="https://youtube.com" target="_blank">
-          <span class="link-favicon">▶</span><span class="link-name">YouTube</span>
-        </a>
-        <a class="link-item" href="https://twitch.tv" target="_blank">
-          <span class="link-favicon">◉</span><span class="link-name">Twitch</span>
-        </a>
-        <a class="link-item" href="https://spotify.com" target="_blank">
-          <span class="link-favicon">♪</span><span class="link-name">Spotify</span>
-        </a>
-        <a class="link-item" href="https://netflix.com" target="_blank">
-          <span class="link-favicon">▣</span><span class="link-name">Netflix</span>
-        </a>
-        <a class="link-item" href="https://reddit.com" target="_blank">
-          <span class="link-favicon">◈</span><span class="link-name">Reddit</span>
-        </a>
-        <a class="link-item" href="https://news.ycombinator.com" target="_blank">
-          <span class="link-favicon">△</span><span class="link-name">HackerNews</span>
-        </a>
+    <!-- Pomodoro Timer -->
+    <div class="tile tile--pomodoro">
+      <div class="tile-tag">focus</div>
+      <div class="pomo-inner">
+        <div class="pomo-mode-tabs">
+          <button class="pomo-mode active" data-mins="25" data-label="pomodoro">pomodoro</button>
+          <button class="pomo-mode" data-mins="5" data-label="short break">short break</button>
+          <button class="pomo-mode" data-mins="15" data-label="long break">long break</button>
+        </div>
+        <div class="pomo-ring-wrap">
+          <svg class="pomo-ring" viewBox="0 0 120 120">
+            <circle class="pomo-ring-bg" cx="60" cy="60" r="54"/>
+            <circle class="pomo-ring-fill" id="pomo-ring-fill" cx="60" cy="60" r="54"/>
+          </svg>
+          <div class="pomo-time-display">
+            <div id="pomo-time">25:00</div>
+            <div id="pomo-label">pomodoro</div>
+          </div>
+        </div>
+        <div class="pomo-controls">
+          <button id="pomo-start" class="pomo-btn pomo-btn-primary">start</button>
+          <button id="pomo-reset" class="pomo-btn">reset</button>
+        </div>
+        <div class="pomo-sessions">
+          <span class="pomo-session-label">sessions</span>
+          <div id="pomo-dots"></div>
+        </div>
       </div>
     </div>
 
@@ -136,21 +142,39 @@
       <div id="clock-date-full-2"></div>
     </div>
 
-    <div class="tile tile--custom-links">
-      <div class="tile-tag">social</div>
-      <div class="link-list">
-        <a class="link-item" href="https://github.com" target="_blank">
-          <span class="link-favicon">⎇</span><span class="link-name">GitHub</span>
-        </a>
-        <a class="link-item" href="https://x.com" target="_blank">
-          <span class="link-favicon">✕</span><span class="link-name">X / Twitter</span>
-        </a>
-        <a class="link-item" href="https://discord.com/app" target="_blank">
-          <span class="link-favicon">◎</span><span class="link-name">Discord</span>
-        </a>
-        <a class="link-item" href="https://instagram.com" target="_blank">
-          <span class="link-favicon">⬡</span><span class="link-name">Instagram</span>
-        </a>
+    <!-- Calculator -->
+    <div class="tile tile--calc">
+      <div class="tile-tag">calc</div>
+      <div class="calc-inner">
+        <div class="calc-display">
+          <div id="calc-expr" class="calc-expr"></div>
+          <div id="calc-result" class="calc-result">0</div>
+        </div>
+        <div class="calc-grid">
+          <button class="calc-btn calc-fn" data-val="C">C</button>
+          <button class="calc-btn calc-fn" data-val="±">±</button>
+          <button class="calc-btn calc-fn" data-val="%">%</button>
+          <button class="calc-btn calc-op" data-val="÷">÷</button>
+
+          <button class="calc-btn" data-val="7">7</button>
+          <button class="calc-btn" data-val="8">8</button>
+          <button class="calc-btn" data-val="9">9</button>
+          <button class="calc-btn calc-op" data-val="×">×</button>
+
+          <button class="calc-btn" data-val="4">4</button>
+          <button class="calc-btn" data-val="5">5</button>
+          <button class="calc-btn" data-val="6">6</button>
+          <button class="calc-btn calc-op" data-val="−">−</button>
+
+          <button class="calc-btn" data-val="1">1</button>
+          <button class="calc-btn" data-val="2">2</button>
+          <button class="calc-btn" data-val="3">3</button>
+          <button class="calc-btn calc-op" data-val="+">+</button>
+
+          <button class="calc-btn calc-zero" data-val="0">0</button>
+          <button class="calc-btn" data-val=".">.</button>
+          <button class="calc-btn calc-op calc-eq" data-val="=">=</button>
+        </div>
       </div>
     </div>
 
@@ -250,6 +274,8 @@
 <script src="js/workspace.js"></script>
 <script src="js/search.js"></script>
 <script src="js/quote.js"></script>
+<script src="js/pomodoro.js"></script>
+<script src="js/calculator.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
