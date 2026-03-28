@@ -371,29 +371,35 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 14px;
+  gap: 12px;
+  /* Allow dropdown to overflow tile bounds */
+  overflow: visible;
+  position: relative;
+  z-index: 200;
 }
 
 .search-wrapper {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   border: var(--border-w) solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 14px;
+  border-radius: 24px;
+  padding: 13px 20px;
   transition: border-color var(--transition), box-shadow var(--transition);
-  background: color-mix(in srgb, var(--bg) 40%, transparent);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 .search-wrapper:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
 }
 
 .search-prompt {
   color: var(--accent);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 16px;
   user-select: none;
   flex-shrink: 0;
 }
@@ -404,10 +410,11 @@ body {
   border: none;
   outline: none;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 16px;
   color: var(--text);
   caret-color: var(--accent);
   min-width: 0;
+  letter-spacing: 0.01em;
 }
 
 #search-input::placeholder {
@@ -417,14 +424,15 @@ body {
 #search-engine-toggle {
   display: flex;
   gap: 6px;
+  justify-content: center;
 }
 
 .engine-btn {
-  padding: 4px 10px;
+  padding: 4px 12px;
   border: var(--border-w) solid var(--border);
   background: transparent;
   color: var(--text-dim);
-  border-radius: var(--radius);
+  border-radius: 12px;
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 11px;
@@ -442,6 +450,122 @@ body {
   border-color: var(--accent2);
   color: var(--accent2);
   background: color-mix(in srgb, var(--accent2) 12%, transparent);
+}
+
+/* ── Search Autocomplete Dropdown ── */
+/* Float freely over other tiles, anchored to the search wrapper */
+.suggest-dropdown {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% - 12px); /* pull up to overlap tile bottom gap */
+  z-index: 9000;
+  background: color-mix(in srgb, var(--bg2) 97%, transparent);
+  border: var(--border-w) solid var(--border);
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+  backdrop-filter: blur(16px);
+  padding-bottom: 6px;
+}
+
+.suggest-dropdown.open { display: flex; }
+
+/* Section label (e.g. "recent" / "suggestions") */
+.suggest-section-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-dimmer);
+  padding: 8px 20px 4px;
+  user-select: none;
+}
+
+.suggest-divider {
+  height: var(--border-w);
+  background: var(--border);
+  margin: 4px 14px;
+  flex-shrink: 0;
+}
+
+.suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: background var(--transition);
+  font-size: 14px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.suggest-item:hover,
+.suggest-item.selected {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--text);
+}
+
+.suggest-item:hover .suggest-icon,
+.suggest-item.selected .suggest-icon {
+  color: var(--accent);
+}
+
+.suggest-icon {
+  color: var(--text-dimmer);
+  font-size: 12px;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  transition: color var(--transition);
+}
+
+.suggest-icon--history { color: var(--accent2); font-size: 11px; }
+
+.suggest-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  font-family: var(--font-mono);
+}
+
+.suggest-typed { color: var(--text-dimmer); }
+
+.suggest-remove {
+  font-size: 9px;
+  color: var(--text-dimmer);
+  padding: 2px 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  transition: color var(--transition);
+  cursor: pointer;
+}
+.suggest-remove:hover { color: #f38ba8; }
+
+/* Clear history button inside history items */
+.suggest-clear-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 20px 2px;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--text-dimmer);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color var(--transition);
+  gap: 6px;
+  user-select: none;
+}
+.suggest-clear-item:hover { color: #f38ba8; }
+
+/* When dropdown open: square the bottom of the search wrapper, extend border */
+.tile--search:has(.suggest-dropdown.open) .search-wrapper {
+  border-radius: 24px 24px 0 0;
+  border-bottom-color: transparent;
 }
 
 /* ── Link Lists (bookmarks, topsites) ── */

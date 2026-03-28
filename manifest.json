@@ -1,15 +1,22 @@
 {
   "manifest_version": 3,
   "name": "HyprTab",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A Hyprland-inspired tiling new tab dashboard with wallpaper-synced theming.",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
+  },
+  "background": {
+    "service_worker": "background.js"
   },
   "permissions": [
     "bookmarks",
     "topSites",
     "storage"
+  ],
+  "host_permissions": [
+    "https://suggestqueries.google.com/*",
+    "https://duckduckgo.com/*"
   ],
   "icons": {
     "16": "icons/icon16.png",
