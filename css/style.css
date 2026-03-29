@@ -372,10 +372,13 @@ body {
   flex-direction: column;
   justify-content: center;
   gap: 12px;
-  /* Allow dropdown to overflow tile bounds */
   overflow: visible;
-  position: relative;
   z-index: 200;
+}
+
+/* Anchor: wraps search-wrapper + dropdown so dropdown aligns exactly to the input */
+.search-anchor {
+  position: relative;
 }
 
 .search-wrapper {
@@ -453,17 +456,17 @@ body {
 }
 
 /* ── Search Autocomplete Dropdown ── */
-/* Float freely over other tiles, anchored to the search wrapper */
+/* Anchored to .search-anchor so it aligns pixel-perfect with the search bar */
 .suggest-dropdown {
   display: none;
   flex-direction: column;
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(100% - 12px); /* pull up to overlap tile bottom gap */
+  top: 100%;          /* flush against the bottom of .search-anchor */
   z-index: 9000;
   background: color-mix(in srgb, var(--bg2) 97%, transparent);
-  border: var(--border-w) solid var(--border);
+  border: var(--border-w) solid var(--accent);
   border-top: none;
   border-radius: 0 0 20px 20px;
   overflow: hidden;
@@ -473,6 +476,14 @@ body {
 }
 
 .suggest-dropdown.open { display: flex; }
+
+/* When dropdown open: square bottom of search wrapper so it connects seamlessly */
+.search-anchor:has(.suggest-dropdown.open) .search-wrapper {
+  border-radius: 24px 24px 0 0;
+  border-bottom-color: transparent;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
 
 /* Section label (e.g. "recent" / "suggestions") */
 .suggest-section-label {
@@ -561,12 +572,6 @@ body {
   user-select: none;
 }
 .suggest-clear-item:hover { color: #f38ba8; }
-
-/* When dropdown open: square the bottom of the search wrapper, extend border */
-.tile--search:has(.suggest-dropdown.open) .search-wrapper {
-  border-radius: 24px 24px 0 0;
-  border-bottom-color: transparent;
-}
 
 /* ── Link Lists (bookmarks, topsites) ── */
 .link-list {

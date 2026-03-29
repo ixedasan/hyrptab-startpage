@@ -277,7 +277,7 @@ const Search = (() => {
       }
     });
 
-    setTimeout(() => input.focus(), 120);
+    // No autofocus on load — user can start typing to focus naturally
 
     // Typing — update dropdown
     input.addEventListener('input', () => {

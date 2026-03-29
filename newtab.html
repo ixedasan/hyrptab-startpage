@@ -73,11 +73,13 @@
 
     <div class="tile tile--search" id="tile-search">
       <div class="tile-tag">search</div>
-      <div class="search-wrapper">
-        <span class="search-prompt">❯</span>
-        <input type="text" id="search-input" placeholder="search the web..." autocomplete="off" spellcheck="false" />
+      <div class="search-anchor">
+        <div class="search-wrapper">
+          <span class="search-prompt">❯</span>
+          <input type="text" id="search-input" placeholder="search the web..." autocomplete="off" spellcheck="false" />
+        </div>
+        <div id="suggest-dropdown" class="suggest-dropdown"></div>
       </div>
-      <div id="suggest-dropdown" class="suggest-dropdown"></div>
       <div id="search-engine-toggle">
         <button class="engine-btn active" data-engine="https://www.google.com/search?q=">G</button>
         <button class="engine-btn" data-engine="https://duckduckgo.com/?q=">D</button>
